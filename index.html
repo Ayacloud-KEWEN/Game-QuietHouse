@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Welcome to my Quiet House</title>
     <style>
-        /* CSS 部分无需修改，保持原样 */
         body {
             display: flex;
             flex-direction: column;
@@ -15,6 +14,7 @@
             font-family: 'Comic Sans MS', cursive, sans-serif;
             padding: 20px;
             margin: 0;
+            box-sizing: border-box; /* 确保 padding 不增加body的总宽度/高度 */
         }
 
         h1 {
@@ -29,12 +29,15 @@
             justify-content: center;
             align-items: flex-start;
             gap: 20px;
-            flex-wrap: wrap; /* 如果屏幕太小，允许元素换行 */
-            width: 100%;
+            /* 关键修改：移除 flex-wrap: wrap; */
+            /* flex-wrap: wrap; */ /* 移除或注释掉 */
+            width: 100%; /* 允许占据可用宽度 */
+            max-width: 1000px; /* 限制最大宽度，防止在大屏幕上过度拉伸 */
+            flex-direction: row; /* 确保默认是水平排列 */
         }
 
         #toolbar {
-            width: 150px;
+            width: 150px; /* 工具栏固定宽度 */
             background-color: #ffe4e1;
             padding: 15px;
             border-radius: 10px;
@@ -42,7 +45,7 @@
             display: flex;
             flex-direction: column;
             gap: 15px;
-            flex-shrink: 0;
+            flex-shrink: 0; /* **关键CSS：防止工具栏被压缩** */
         }
 
         .toolbar-item {
@@ -108,19 +111,27 @@
             flex-direction: column;
             align-items: center;
             gap: 15px;
+            flex-grow: 1; /* **关键CSS：允许游戏区域占据剩余空间** */
+            min-width: 0; /* 允许它在空间不足时收缩，但其子元素不会 */
         }
 
         #game-container {
             position: relative;
-            width: 800px;
-            height: 600px;
-            background-image: url('room.png'); /* 默认背景 */
+            width: 800px; /* 游戏容器的理想宽度 */
+            height: 600px; /* 游戏容器的理想高度 */
+            background-image: url('room.png');
             background-size: cover;
             background-position: center;
             border: 5px solid #dcdcdc;
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             overflow: hidden;
-            transition: background-image 0.5s ease-in-out; /* 背景切换动画 */
+            transition: background-image 0.5s ease-in-out;
+            
+            /* **关键CSS：让游戏容器在小屏幕上等比例缩小** */
+            max-width: 100%; /* 限制最大宽度为父容器的100% */
+            height: auto; /* 自动调整高度以保持宽高比 */
+            aspect-ratio: 800 / 600; /* 定义容器的宽高比 */
+            flex-shrink: 1; /* 允许它在必要时缩小 */
         }
 
         #bg-nav {
@@ -132,10 +143,11 @@
             padding: 10px 20px;
             border-radius: 25px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            margin-top: 15px; /* 与游戏容器的间距 */
         }
 
         #bg-nav button {
-            background-color: #ffb6c1; /* 粉色按钮 */
+            background-color: #ffb6c1;
             color: white;
             border: none;
             width: 40px;
@@ -155,7 +167,7 @@
             color: #5f6c8c;
             font-weight: bold;
             font-size: 1.2em;
-            min-width: 80px; /* 避免文字变化时按钮跳动 */
+            min-width: 80px;
             text-align: center;
         }
 
@@ -163,8 +175,8 @@
             position: absolute;
             cursor: grab;
             user-select: none;
-            -webkit-user-select: none; /* 兼容旧版 Safari */
-            touch-action: none; /* **关键CSS：禁用触摸默认行为，如滚动和缩放** */
+            -webkit-user-select: none;
+            touch-action: none;
             width: auto;
             height: auto;
             min-width: 30px;
@@ -189,6 +201,45 @@
         .furniture.bed { width: 250px; } 
         .furniture.table { width: 120px; } 
         .furniture.lamp { width: 80px; } 
+
+        /* **响应式布局：当屏幕宽度小于某个值时，改变布局** */
+        @media (max-width: 900px) { /* 例如，当屏幕宽度小于900px时，调整布局 */
+            #main-content {
+                flex-direction: column; /* 让工具栏和游戏区域垂直堆叠 */
+                align-items: center; /* 垂直堆叠时居中 */
+            }
+
+            #toolbar {
+                width: 100%; /* 工具栏占据整个宽度 */
+                max-width: 300px; /* 限制最大宽度，防止在宽屏手机上过宽 */
+                margin-bottom: 20px; /* 与游戏区域的间距 */
+                flex-direction: row; /* 工具栏内部的物品也改为水平排列 */
+                flex-wrap: wrap; /* 允许工具栏内部物品换行 */
+                justify-content: center; /* 内部物品居中 */
+                padding: 10px;
+                gap: 10px;
+            }
+            .toolbar-item {
+                flex: 1 1 auto; /* 让工具栏物品自动分配空间 */
+                min-width: 100px; /* 最小宽度，防止挤压过小 */
+                max-width: 120px; /* 最大宽度 */
+            }
+            #size-controls {
+                width: 100%;
+                margin-top: 0; /* 调整间距 */
+                padding: 5px;
+                order: 99; /* 确保它在工具栏物品的最后 */
+            }
+
+            #game-area {
+                width: 100%; /* 游戏区域占据可用宽度 */
+            }
+            #game-container {
+                width: 90%; /* 游戏容器占据父容器的90% */
+                max-width: 700px; /* 限制最大宽度 */
+            }
+        }
+
     </style>
 </head>
 <body>
@@ -228,8 +279,7 @@
     </div>
 
     <script>
-        // JavaScript: 负责游戏的交互逻辑
-        
+        // JavaScript 部分无需修改，保持原样
         const gameContainer = document.getElementById('game-container');
         const toolbarItems = document.querySelectorAll('.toolbar-item');
         const sizeUpButton = document.getElementById('size-up');
@@ -282,18 +332,11 @@
             selectedFurniture = null;
         }
 
-        // **主要修改部分：将拖动逻辑封装并兼容触摸事件**
-
         function dragStart(e) {
-            // 阻止默认行为，特别是对于触摸事件
             e.preventDefault();
-
-            // 统一获取事件信息（鼠标或触摸）
             const eventInfo = e.touches ? e.touches[0] : e;
-
-            // 确保是左键点击或单指触摸
             if (e.button === 0 || e.touches) {
-                activeItem = this; // 'this' 指向被点击/触摸的家具
+                activeItem = this;
 
                 clearSelection();
                 activeItem.classList.add('selected');
@@ -317,7 +360,6 @@
                 let newLeft = eventInfo.clientX - containerRect.left - offsetX;
                 let newTop = eventInfo.clientY - containerRect.top - offsetY;
 
-                // 边界检测
                 newLeft = Math.max(0, Math.min(newLeft, containerRect.width - activeItem.offsetWidth));
                 newTop = Math.max(0, Math.min(newTop, containerRect.height - activeItem.offsetHeight));
 
@@ -333,21 +375,17 @@
             }
         }
 
-        // **在整个文档上监听移动和结束事件**
         document.addEventListener('mousemove', dragMove);
         document.addEventListener('touchmove', dragMove, { passive: false });
 
         document.addEventListener('mouseup', dragEnd);
         document.addEventListener('touchend', dragEnd);
 
-        // 函数来初始化所有交互行为
         function makeInteractive(item) {
-            // 同时监听鼠标按下和触摸开始事件
             item.addEventListener('mousedown', dragStart);
             item.addEventListener('touchstart', dragStart, { passive: false });
         }
         
-        // 工具栏物品点击事件
         toolbarItems.forEach(toolbarItem => {
             toolbarItem.addEventListener('click', () => {
                 const itemType = toolbarItem.dataset.item;
@@ -376,14 +414,12 @@
             });
         });
         
-        // 点击空白处清除选中
         gameContainer.addEventListener('click', (e) => {
             if (e.target === gameContainer) {
                 clearSelection();
             }
         });
 
-        // 右键删除（在触摸设备上长按会触发）
         gameContainer.addEventListener('contextmenu', (e) => {
             if (e.target.classList.contains('furniture') && gameContainer.contains(e.target)) {
                 e.preventDefault();
@@ -392,7 +428,6 @@
             }
         });
 
-        // 尺寸调整
         sizeUpButton.addEventListener('click', () => {
             if (selectedFurniture) {
                 let newWidth = Math.min(selectedFurniture.offsetWidth + SIZE_STEP, MAX_SIZE);
@@ -413,9 +448,7 @@
             }
         });
         
-        // 初始化第一个背景
         changeBackground(0);
-
     </script>
 </body>
 </html>
