@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Welcome to my Quiet House</title>
     <style>
+        /* CSS 部分无需修改，保持原样 */
         body {
             display: flex;
             flex-direction: column;
@@ -161,6 +163,8 @@
             position: absolute;
             cursor: grab;
             user-select: none;
+            -webkit-user-select: none; /* 兼容旧版 Safari */
+            touch-action: none; /* **关键CSS：禁用触摸默认行为，如滚动和缩放** */
             width: auto;
             height: auto;
             min-width: 30px;
@@ -189,7 +193,7 @@
 </head>
 <body>
 
-    <h1>Welcom to my Quiet House</h1>
+    <h1>Welcome to my Quiet House</h1>
     
     <div id="main-content">
         <div id="toolbar">
@@ -234,17 +238,16 @@
         const nextBgButton = document.getElementById('next-bg');
         const roomNameDisplay = document.getElementById('room-name');
 
-        let activeItem = null; // 当前正在拖动的物品
-        let selectedFurniture = null; // 当前被选中的家具，用于调整大小
+        let activeItem = null;
+        let selectedFurniture = null;
         let offsetX = 0;
         let offsetY = 0;
-        let currentZIndex = 10; // 用于控制新添加物品的层级
+        let currentZIndex = 10;
 
-        const SIZE_STEP = 10; // 每次调整大小的像素步长
-        const MIN_SIZE = 30; // 家具的最小尺寸
-        const MAX_SIZE = 350; // 家具的最大尺寸
+        const SIZE_STEP = 10;
+        const MIN_SIZE = 30;
+        const MAX_SIZE = 350;
 
-        // **新增：背景图片和名称数组**
         const backgrounds = [
             { name: 'Bedroom', src: 'room.png' },
             { name: 'Garden', src: 'garden.png' },
@@ -252,69 +255,99 @@
         ];
         let currentBgIndex = 0;
 
-        // **新增：切换背景的函数**
         function changeBackground(index) {
-            // 更新索引
             currentBgIndex = index;
-
-            // 获取背景信息
             const bg = backgrounds[currentBgIndex];
-
-            // 更新背景图片和房间名称
             gameContainer.style.backgroundImage = `url('${bg.src}')`;
             roomNameDisplay.textContent = bg.name;
-
-            // **清空房间内的所有家具**
             gameContainer.innerHTML = '';
-            
-            // 重置选中状态和z-index
             selectedFurniture = null;
             currentZIndex = 10;
         }
 
-        // **新增：为翻页按钮添加事件监听**
         nextBgButton.addEventListener('click', () => {
-            let nextIndex = currentBgIndex + 1;
-            if (nextIndex >= backgrounds.length) {
-                nextIndex = 0; // 循环到第一个
-            }
+            let nextIndex = (currentBgIndex + 1) % backgrounds.length;
             changeBackground(nextIndex);
         });
 
         prevBgButton.addEventListener('click', () => {
-            let prevIndex = currentBgIndex - 1;
-            if (prevIndex < 0) {
-                prevIndex = backgrounds.length - 1; // 循环到最后一个
-            }
+            let prevIndex = (currentBgIndex - 1 + backgrounds.length) % backgrounds.length;
             changeBackground(prevIndex);
         });
 
-        // 辅助函数：清除所有家具的选中状态
         function clearSelection() {
-            document.querySelectorAll('.furniture').forEach(item => {
+            document.querySelectorAll('.furniture.selected').forEach(item => {
                 item.classList.remove('selected');
             });
             selectedFurniture = null;
         }
 
-        // **函数来初始化拖动和选中行为**
-        function makeInteractive(item) {
-            item.addEventListener('mousedown', (e) => {
-                if (e.button === 0) { // 确保是左键点击
-                    clearSelection();
-                    item.classList.add('selected');
-                    selectedFurniture = item;
-                    activeItem = item;
-                    const itemRect = activeItem.getBoundingClientRect();
-                    offsetX = e.clientX - itemRect.left;
-                    offsetY = e.clientY - itemRect.top;
-                    activeItem.style.zIndex = currentZIndex++;
-                    activeItem.classList.add('dragging');
-                }
-            });
+        // **主要修改部分：将拖动逻辑封装并兼容触摸事件**
+
+        function dragStart(e) {
+            // 阻止默认行为，特别是对于触摸事件
+            e.preventDefault();
+
+            // 统一获取事件信息（鼠标或触摸）
+            const eventInfo = e.touches ? e.touches[0] : e;
+
+            // 确保是左键点击或单指触摸
+            if (e.button === 0 || e.touches) {
+                activeItem = this; // 'this' 指向被点击/触摸的家具
+
+                clearSelection();
+                activeItem.classList.add('selected');
+                selectedFurniture = activeItem;
+
+                const itemRect = activeItem.getBoundingClientRect();
+                offsetX = eventInfo.clientX - itemRect.left;
+                offsetY = eventInfo.clientY - itemRect.top;
+                
+                activeItem.style.zIndex = currentZIndex++;
+                activeItem.classList.add('dragging');
+            }
         }
 
-        // 1. 工具栏物品点击事件
+        function dragMove(e) {
+            if (activeItem) {
+                e.preventDefault();
+                const eventInfo = e.touches ? e.touches[0] : e;
+                
+                const containerRect = gameContainer.getBoundingClientRect();
+                let newLeft = eventInfo.clientX - containerRect.left - offsetX;
+                let newTop = eventInfo.clientY - containerRect.top - offsetY;
+
+                // 边界检测
+                newLeft = Math.max(0, Math.min(newLeft, containerRect.width - activeItem.offsetWidth));
+                newTop = Math.max(0, Math.min(newTop, containerRect.height - activeItem.offsetHeight));
+
+                activeItem.style.left = newLeft + 'px';
+                activeItem.style.top = newTop + 'px';
+            }
+        }
+
+        function dragEnd() {
+            if (activeItem) {
+                activeItem.classList.remove('dragging');
+                activeItem = null;
+            }
+        }
+
+        // **在整个文档上监听移动和结束事件**
+        document.addEventListener('mousemove', dragMove);
+        document.addEventListener('touchmove', dragMove, { passive: false });
+
+        document.addEventListener('mouseup', dragEnd);
+        document.addEventListener('touchend', dragEnd);
+
+        // 函数来初始化所有交互行为
+        function makeInteractive(item) {
+            // 同时监听鼠标按下和触摸开始事件
+            item.addEventListener('mousedown', dragStart);
+            item.addEventListener('touchstart', dragStart, { passive: false });
+        }
+        
+        // 工具栏物品点击事件
         toolbarItems.forEach(toolbarItem => {
             toolbarItem.addEventListener('click', () => {
                 const itemType = toolbarItem.dataset.item;
@@ -330,15 +363,11 @@
                     const containerRect = gameContainer.getBoundingClientRect();
                     let initialLeft = (containerRect.width / 2) - (newFurniture.offsetWidth / 2);
                     let initialTop = (containerRect.height / 2) - (newFurniture.offsetHeight / 2);
-                    if (initialLeft < 0) initialLeft = 0;
-                    if (initialTop < 0) initialTop = 0;
-                    newFurniture.style.left = initialLeft + 'px';
-                    newFurniture.style.top = initialTop + 'px';
+                    newFurniture.style.left = `${Math.max(0, initialLeft)}px`;
+                    newFurniture.style.top = `${Math.max(0, initialTop)}px`;
                     newFurniture.style.zIndex = currentZIndex++;
                 };
-                if (newFurniture.complete) {
-                    newFurniture.onload(); 
-                }
+                if (newFurniture.complete) newFurniture.onload();
 
                 makeInteractive(newFurniture);
                 clearSelection();
@@ -346,37 +375,7 @@
                 selectedFurniture = newFurniture;
             });
         });
-
-        // 2. 鼠标移动事件
-        document.addEventListener('mousemove', (e) => {
-            if (activeItem) {
-                e.preventDefault();
-                const containerRect = gameContainer.getBoundingClientRect();
-                let newLeft = e.clientX - containerRect.left - offsetX;
-                let newTop = e.clientY - containerRect.top - offsetY;
-
-                if (newLeft < 0) newLeft = 0;
-                if (newLeft + activeItem.offsetWidth > containerRect.width) {
-                    newLeft = containerRect.width - activeItem.offsetWidth;
-                }
-                if (newTop < 0) newTop = 0;
-                if (newTop + activeItem.offsetHeight > containerRect.height) {
-                    newTop = containerRect.height - activeItem.offsetHeight;
-                }
-
-                activeItem.style.left = newLeft + 'px';
-                activeItem.style.top = newTop + 'px';
-            }
-        });
-
-        // 3. 鼠标松开事件
-        document.addEventListener('mouseup', () => {
-            if (activeItem) {
-                activeItem.classList.remove('dragging');
-                activeItem = null;
-            }
-        });
-
+        
         // 点击空白处清除选中
         gameContainer.addEventListener('click', (e) => {
             if (e.target === gameContainer) {
@@ -384,7 +383,7 @@
             }
         });
 
-        // 右键删除
+        // 右键删除（在触摸设备上长按会触发）
         gameContainer.addEventListener('contextmenu', (e) => {
             if (e.target.classList.contains('furniture') && gameContainer.contains(e.target)) {
                 e.preventDefault();
@@ -400,7 +399,7 @@
                 selectedFurniture.style.width = newWidth + 'px';
                 selectedFurniture.style.height = 'auto';
             } else {
-                alert('请先点击一个家具来选中它！');
+                alert('Please select an item first!');
             }
         });
 
@@ -410,11 +409,11 @@
                 selectedFurniture.style.width = newWidth + 'px';
                 selectedFurniture.style.height = 'auto';
             } else {
-                alert('请先点击一个家具来选中它！');
+                alert('Please select an item first!');
             }
         });
         
-        // **新增：初始化第一个背景**
+        // 初始化第一个背景
         changeBackground(0);
 
     </script>
