@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome to my Quiet House</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            min-height: 100vh;
+            background-color: #f0f8ff;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: #5f6c8c;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+
+        #main-content {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap; /* 如果屏幕太小，允许元素换行 */
+            width: 100%;
+        }
+
+        #toolbar {
+            width: 150px;
+            background-color: #ffe4e1;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .toolbar-item {
+            width: 100%;
+            background-color: #ffffff;
+            border: 2px solid #ffccdd;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .toolbar-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .toolbar-item img {
+            max-width: 80%;
+            height: auto;
+            display: block;
+            margin: 0 auto 5px auto;
+        }
+        .toolbar-item span {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        #size-controls {
+            background-color: #e0f2f7;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        #size-controls button {
+            background-color: #87ceeb;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin: 0 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s ease;
+        }
+
+        #size-controls button:hover {
+            background-color: #5cb3d4;
+        }
+
+        #size-controls span {
+            color: #333;
+            font-weight: bold;
+        }
+        
+        #game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background-image: url('room.png'); /* 默认背景 */
+            background-size: cover;
+            background-position: center;
+            border: 5px solid #dcdcdc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            overflow: hidden;
+            transition: background-image 0.5s ease-in-out; /* 背景切换动画 */
+        }
+
+        #bg-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            background-color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        #bg-nav button {
+            background-color: #ffb6c1; /* 粉色按钮 */
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #bg-nav button:hover {
+            background-color: #f08080;
+        }
+        #room-name {
+            color: #5f6c8c;
+            font-weight: bold;
+            font-size: 1.2em;
+            min-width: 80px; /* 避免文字变化时按钮跳动 */
+            text-align: center;
+        }
+
+        .furniture {
+            position: absolute;
+            cursor: grab;
+            user-select: none;
+            width: auto;
+            height: auto;
+            min-width: 30px;
+            min-height: 30px;
+            max-width: 350px;
+            max-height: 350px;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            outline: 2px dashed transparent;
+            outline-offset: 3px;
+        }
+        
+        .furniture:active, .furniture.dragging {
+            cursor: grabbing;
+            transform: scale(1.02);
+        }
+
+        .furniture.selected {
+            outline-color: #87ceeb;
+            box-shadow: 0 0 10px rgba(135, 206, 235, 0.7);
+        }
+
+        .furniture.bed { width: 250px; } 
+        .furniture.table { width: 120px; } 
+        .furniture.lamp { width: 80px; } 
+    </style>
+</head>
+<body>
+
+    <h1>Welcom to my Quiet House</h1>
+    
+    <div id="main-content">
+        <div id="toolbar">
+            <div class="toolbar-item" data-item="bed" data-src="bed.png">
+                <img src="bed.png" alt="Bed">
+                <span>Bed</span>
+            </div>
+            <div class="toolbar-item" data-item="table" data-src="table.png">
+                <img src="table.png" alt="Table">
+                <span>Table</span>
+            </div>
+            <div class="toolbar-item" data-item="lamp" data-src="lamp.png">
+                <img src="lamp.png" alt="Lamp">
+                <span>Lamp</span>
+            </div>
+
+            <div id="size-controls">
+                <span>Size:</span>
+                <button id="size-down">-</button>
+                <button id="size-up">+</button>
+            </div>
+        </div>
+
+        <div id="game-area">
+            <div id="game-container"></div>
+            <div id="bg-nav">
+                <button id="prev-bg">‹</button>
+                <span id="room-name">Bedroom</span>
+                <button id="next-bg">›</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript: 负责游戏的交互逻辑
+        
+        const gameContainer = document.getElementById('game-container');
+        const toolbarItems = document.querySelectorAll('.toolbar-item');
+        const sizeUpButton = document.getElementById('size-up');
+        const sizeDownButton = document.getElementById('size-down');
+        const prevBgButton = document.getElementById('prev-bg');
+        const nextBgButton = document.getElementById('next-bg');
+        const roomNameDisplay = document.getElementById('room-name');
+
+        let activeItem = null; // 当前正在拖动的物品
+        let selectedFurniture = null; // 当前被选中的家具，用于调整大小
+        let offsetX = 0;
+        let offsetY = 0;
+        let currentZIndex = 10; // 用于控制新添加物品的层级
+
+        const SIZE_STEP = 10; // 每次调整大小的像素步长
+        const MIN_SIZE = 30; // 家具的最小尺寸
+        const MAX_SIZE = 350; // 家具的最大尺寸
+
+        // **新增：背景图片和名称数组**
+        const backgrounds = [
+            { name: 'Bedroom', src: 'room.png' },
+            { name: 'Garden', src: 'garden.png' },
+            { name: 'Kitchen', src: 'kitchen.png' }
+        ];
+        let currentBgIndex = 0;
+
+        // **新增：切换背景的函数**
+        function changeBackground(index) {
+            // 更新索引
+            currentBgIndex = index;
+
+            // 获取背景信息
+            const bg = backgrounds[currentBgIndex];
+
+            // 更新背景图片和房间名称
+            gameContainer.style.backgroundImage = `url('${bg.src}')`;
+            roomNameDisplay.textContent = bg.name;
+
+            // **清空房间内的所有家具**
+            gameContainer.innerHTML = '';
+            
+            // 重置选中状态和z-index
+            selectedFurniture = null;
+            currentZIndex = 10;
+        }
+
+        // **新增：为翻页按钮添加事件监听**
+        nextBgButton.addEventListener('click', () => {
+            let nextIndex = currentBgIndex + 1;
+            if (nextIndex >= backgrounds.length) {
+                nextIndex = 0; // 循环到第一个
+            }
+            changeBackground(nextIndex);
+        });
+
+        prevBgButton.addEventListener('click', () => {
+            let prevIndex = currentBgIndex - 1;
+            if (prevIndex < 0) {
+                prevIndex = backgrounds.length - 1; // 循环到最后一个
+            }
+            changeBackground(prevIndex);
+        });
+
+        // 辅助函数：清除所有家具的选中状态
+        function clearSelection() {
+            document.querySelectorAll('.furniture').forEach(item => {
+                item.classList.remove('selected');
+            });
+            selectedFurniture = null;
+        }
+
+        // **函数来初始化拖动和选中行为**
+        function makeInteractive(item) {
+            item.addEventListener('mousedown', (e) => {
+                if (e.button === 0) { // 确保是左键点击
+                    clearSelection();
+                    item.classList.add('selected');
+                    selectedFurniture = item;
+                    activeItem = item;
+                    const itemRect = activeItem.getBoundingClientRect();
+                    offsetX = e.clientX - itemRect.left;
+                    offsetY = e.clientY - itemRect.top;
+                    activeItem.style.zIndex = currentZIndex++;
+                    activeItem.classList.add('dragging');
+                }
+            });
+        }
+
+        // 1. 工具栏物品点击事件
+        toolbarItems.forEach(toolbarItem => {
+            toolbarItem.addEventListener('click', () => {
+                const itemType = toolbarItem.dataset.item;
+                const imgSrc = toolbarItem.dataset.src;
+                const newFurniture = document.createElement('img');
+                newFurniture.src = imgSrc;
+                newFurniture.classList.add('furniture', itemType);
+                newFurniture.alt = itemType;
+                newFurniture.style.position = 'absolute';
+                gameContainer.appendChild(newFurniture);
+
+                newFurniture.onload = () => {
+                    const containerRect = gameContainer.getBoundingClientRect();
+                    let initialLeft = (containerRect.width / 2) - (newFurniture.offsetWidth / 2);
+                    let initialTop = (containerRect.height / 2) - (newFurniture.offsetHeight / 2);
+                    if (initialLeft < 0) initialLeft = 0;
+                    if (initialTop < 0) initialTop = 0;
+                    newFurniture.style.left = initialLeft + 'px';
+                    newFurniture.style.top = initialTop + 'px';
+                    newFurniture.style.zIndex = currentZIndex++;
+                };
+                if (newFurniture.complete) {
+                    newFurniture.onload(); 
+                }
+
+                makeInteractive(newFurniture);
+                clearSelection();
+                newFurniture.classList.add('selected');
+                selectedFurniture = newFurniture;
+            });
+        });
+
+        // 2. 鼠标移动事件
+        document.addEventListener('mousemove', (e) => {
+            if (activeItem) {
+                e.preventDefault();
+                const containerRect = gameContainer.getBoundingClientRect();
+                let newLeft = e.clientX - containerRect.left - offsetX;
+                let newTop = e.clientY - containerRect.top - offsetY;
+
+                if (newLeft < 0) newLeft = 0;
+                if (newLeft + activeItem.offsetWidth > containerRect.width) {
+                    newLeft = containerRect.width - activeItem.offsetWidth;
+                }
+                if (newTop < 0) newTop = 0;
+                if (newTop + activeItem.offsetHeight > containerRect.height) {
+                    newTop = containerRect.height - activeItem.offsetHeight;
+                }
+
+                activeItem.style.left = newLeft + 'px';
+                activeItem.style.top = newTop + 'px';
+            }
+        });
+
+        // 3. 鼠标松开事件
+        document.addEventListener('mouseup', () => {
+            if (activeItem) {
+                activeItem.classList.remove('dragging');
+                activeItem = null;
+            }
+        });
+
+        // 点击空白处清除选中
+        gameContainer.addEventListener('click', (e) => {
+            if (e.target === gameContainer) {
+                clearSelection();
+            }
+        });
+
+        // 右键删除
+        gameContainer.addEventListener('contextmenu', (e) => {
+            if (e.target.classList.contains('furniture') && gameContainer.contains(e.target)) {
+                e.preventDefault();
+                e.target.remove();
+                clearSelection();
+            }
+        });
+
+        // 尺寸调整
+        sizeUpButton.addEventListener('click', () => {
+            if (selectedFurniture) {
+                let newWidth = Math.min(selectedFurniture.offsetWidth + SIZE_STEP, MAX_SIZE);
+                selectedFurniture.style.width = newWidth + 'px';
+                selectedFurniture.style.height = 'auto';
+            } else {
+                alert('请先点击一个家具来选中它！');
+            }
+        });
+
+        sizeDownButton.addEventListener('click', () => {
+            if (selectedFurniture) {
+                let newWidth = Math.max(selectedFurniture.offsetWidth - SIZE_STEP, MIN_SIZE);
+                selectedFurniture.style.width = newWidth + 'px';
+                selectedFurniture.style.height = 'auto';
+            } else {
+                alert('请先点击一个家具来选中它！');
+            }
+        });
+        
+        // **新增：初始化第一个背景**
+        changeBackground(0);
+
+    </script>
+</body>
+</html>
